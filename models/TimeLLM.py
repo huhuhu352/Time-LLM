@@ -16,7 +16,7 @@ class FlattenHead(nn.Module):
     def __init__(self, n_vars, nf, target_window, head_dropout=0):
         super().__init__()
         self.n_vars = n_vars
-        self.flatten = nn.Flatten(start_dim=-2)
+        self.flatten = nn.Flatten(start_dim=-2) #[-1, F, 32, patch_len]
         self.linear = nn.Linear(nf, target_window)
         self.dropout = nn.Dropout(head_dropout)
 
@@ -244,10 +244,10 @@ class Model(nn.Module):
         dec_out = dec_out[:, :, :self.d_ff]
 
         dec_out = torch.reshape(
-            dec_out, (-1, n_vars, dec_out.shape[-2], dec_out.shape[-1]))
-        dec_out = dec_out.permute(0, 1, 3, 2).contiguous()
+            dec_out, (-1, n_vars, dec_out.shape[-2], dec_out.shape[-1])) #[-1, F, patch_len, 32]
+        dec_out = dec_out.permute(0, 1, 3, 2).contiguous() #[-1, F, 32, patch_len]
 
-        dec_out = self.output_projection(dec_out[:, :, :, -self.patch_nums:])
+        dec_out = self.output_projection(dec_out[:, :, :, -self.patch_nums:]) #[-1, F, 32, patch_len] (-1, F, 32*patch_len) 
         dec_out = dec_out.permute(0, 2, 1).contiguous()
 
         dec_out = self.normalize_layers(dec_out, 'denorm')
